@@ -1,0 +1,3 @@
+run > ada.adb
+or
+./run.sh >> ada.adb

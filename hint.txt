@@ -1,0 +1,1 @@
+the "ada.adb" file is used to test if the "window handle is invalid" thing gets triggered on a file. Btw it contains my workspace and mostly the main code is in c#.
