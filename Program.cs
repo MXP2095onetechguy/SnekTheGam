@@ -32,6 +32,7 @@ SOFTWARE.
 /* uncomment this line to make this snek silent */
 // #define SLBeep
 
+using AsmCs;
 using Towel;
 using System;
 using RNGGen;
@@ -40,6 +41,7 @@ using System.IO;
 // using BinIOUtils;
 using Sharprompt;
 using System.Media;
+using MXPSQL.EDict;
 using Newtonsoft.Json;
 using System.Threading;
 using System.Collections;
@@ -47,7 +49,10 @@ using System.Diagnostics;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using static System.AppDomain;
+using YamlDotNet.Serialization;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace SnekTheGam{
 
@@ -70,6 +75,8 @@ namespace SnekTheGam{
 		// static char[] DirectionChars = { '|', '|', '-', '-', };
 		// static char[] DirectionChars = { '#', '#', '#', '#', };
 		static char[] Objects = {'@', '+', 'A'};
+
+		static string[] Boxd = {"#", "▉"};
 
 		// sleeps
 		static int sleep = 100;
@@ -97,10 +104,11 @@ namespace SnekTheGam{
 		static int lstScore = 0;
 
 		// Paths
-		static string HomeDirName = "SnekTheGam";
-		static string HomePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-		static string HomeDir = Path.Combine(new String[] {HomePath, HomeDirName});
-		static string JSONPath = Path.Combine(new String[] {HomeDir, "Storage.json"});
+		static readonly string HomeDirName = ".SnekTheGam";
+		static readonly string HomePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+		static readonly string HomeDir = Path.Combine(new String[] {HomePath, HomeDirName});
+		static readonly string JSONPath = Path.Combine(new String[] {HomeDir, "Storage.json"});
+		static readonly string YAMLPath = Path.Combine(new String[] {HomeDir, "Config.yaml"});
 
 		// eol
 		static string eol = System.Environment.NewLine;
@@ -112,6 +120,11 @@ namespace SnekTheGam{
 		// rng
 		static RNGSys RS = new RNGSys();
 
+		// Assembly Stuff
+		static AssemblyCs acs = new AssemblyCs();
+		static bool UnicodeSupport = acs.IsUnicodeSupported();
+
+		// Binary
 		// static BinIO Bin = new BinIO();
 
 		// timin
@@ -135,7 +148,8 @@ namespace SnekTheGam{
 		// static Spinner IOSpinner = new Spinner();
 
 		// storage dictionary
-		static Dictionary<string, string> JSONDict = new Dictionary<string, string>();
+		static ExtDictionary<string, string> TemplaeDict = new ExtDictionary<string, string>();
+		static ExtDictionary<string, string> JSONDict = TemplaeDict.New();
 
 		// json related
 		static JObject JSONTemp = new JObject(new JProperty("HighScore", 0),new JProperty("LastSessionScore", 0));
@@ -155,6 +169,14 @@ namespace SnekTheGam{
 
 			// Debugger
 			IsDebugger = System.Diagnostics.Debugger.IsAttached;
+
+			
+
+			string box = Boxd[0];
+
+			if(UnicodeSupport){
+				box = Boxd[1];
+			}
 
 			// cli Parsing
 			for(int itr = 0; itr < args.Length; itr++)
@@ -191,20 +213,28 @@ namespace SnekTheGam{
 					AudioRun = false;
 				}
 				else if(arg == "---Reset"){
+					if(IsDebugger){
+						Console.WriteLine(UnicodeSupport);
+					}
 					var eeh = Prompt.Confirm("Are you sure you want to reset your stored data?");
 					if(eeh){
 						Spinner.Start("Resseting data and writting to json...", () => {
 							using(StreamWriter sw = new StreamWriter(JSONPath))
 							using (JsonTextWriter writer = new JsonTextWriter(sw))
 							{
-								JObject jobj = new JObject(
-									new JProperty("HighScore", 0),
-									new JProperty("LastSessionScore", 0)
-								);
 
-								jobj.WriteTo(writer);
+								Console.WriteLine();
+
+								JSONTemp.WriteTo(writer);
 							}
-						});
+						}, Patterns.Line);
+					}
+					else if(arg == "---Debugger" || arg == "---Debian"){
+						/* while(true){
+							Console.Clear();
+							Console.WriteLine("Window Width: " + width);
+							Console.WriteLine("Window Height: " + height);
+						} */
 					}
 					else{
 						Console.WriteLine("That was close, let's imagine that this conversation didn't exist ");
@@ -226,7 +256,7 @@ namespace SnekTheGam{
 					{
 						JSONTemp.WriteTo(writer);
 					}
-				});
+				}, Patterns.Line);
 			}
 
 			// Console.SetCursorPosition(0, 0);
@@ -245,7 +275,7 @@ namespace SnekTheGam{
 							throw new Newtonsoft.Json.JsonReaderException("This json is invalid with the schema");
 						}
 
-						JSONDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
+						JSONDict.ConvertFromJson(content);
 
 						highScore = Int32.Parse(JSONDict["HighScore"]);
 						lstScore = Int32.Parse(JSONDict["LastSessionScore"]);
@@ -266,7 +296,7 @@ namespace SnekTheGam{
     						}
 						}
 					} */
-				});
+				}, Patterns.Line);
 			}
 			catch(Newtonsoft.Json.JsonReaderException jre){
 				Prompt.Input<string>("Maam, I will cut the top of your sexy button up shirt because of " + jre.Message);
@@ -329,8 +359,8 @@ namespace SnekTheGam{
 					throw new CatchExit();
 				}
 				
-				Console.Title = "snek";
-				Console.WriteLine("Snek the Game");
+				Console.Title = "SnekTheGam";
+				snekit();
 				Console.WriteLine("Your high score is " + highScore);
 				Console.WriteLine("Your score from last session is " + lstScore);
 				var eh = Prompt.Confirm("Are you ready to play the game?");
@@ -344,6 +374,8 @@ namespace SnekTheGam{
 
 					width = Console.WindowWidth;
 					height = Console.WindowHeight;
+
+					resized = false;
 					
 					map = new Tile[width, height];
 					hX = (width / 2); hY = (height / 2);
@@ -384,7 +416,7 @@ namespace SnekTheGam{
 					for(int di = 0; di < width; di++)
 					{
 						Console.SetCursorPosition(di, GUIPos);
-						Console.Write("#");
+						Console.Write(box);
 					}
 					Console.BackgroundColor = cBackground;
 
@@ -424,7 +456,8 @@ namespace SnekTheGam{
 							Console.Clear();
 							Console.Write("Console was resized. Snake game has ended." + eol);
 							Console.ReadLine();
-							throw new CatchExit();
+							// throw new CatchExit();
+							break;
 						}
 
 						if (Console.WindowWidth != width || Console.WindowHeight != height)
@@ -449,7 +482,7 @@ namespace SnekTheGam{
 						{
 							Console.Clear();
 							Console.Write("Game Over. Score: " + score + "." + eol);
-							Console.ReadLine();
+							// Console.ReadLine();
 							// throw new CatchExit();
 							break;
 						}
@@ -461,8 +494,13 @@ namespace SnekTheGam{
 						Console.BackgroundColor = ConsoleColor.Blue;
 						for(int di = 0; di < width; di++)
 						{
-							Console.SetCursorPosition(di, GUIPos);
-							Console.Write("#");
+							try{
+								Console.SetCursorPosition(di, GUIPos);
+							}
+							catch(Exception e){
+
+							}
+							Console.Write(box);
 						}
 						Console.BackgroundColor = cBackground;
 
@@ -499,7 +537,7 @@ namespace SnekTheGam{
 							PositionLaxative();
 							Console.Clear();
 							Console.Write("Game Over. Score: " + score + "." + eol);
-							Console.ReadLine();
+							// Console.ReadLine();
 							// throw new CatchExit();
 							break;
 						}
@@ -531,9 +569,11 @@ namespace SnekTheGam{
 						score = (snake.Count - 1);
 						Thread.Sleep(sleep);
 					}
+					Console.CursorVisible = true;
+					Console.ReadLine();
 					Console.Clear();
 
-
+					snekit();
 					eh = Prompt.Confirm("You want to play again?");
 					if(!eh){
 						throw new CatchExit();
@@ -559,7 +599,7 @@ namespace SnekTheGam{
 
 						jobj.WriteTo(writer);
 					}
-				});
+				}, Patterns.Line);
 
 				Beep(AudioRun);
 				GC.Collect(0);
@@ -660,6 +700,21 @@ namespace SnekTheGam{
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Write(Objects[2]);
 			Console.ForegroundColor = cForeground;
+		}
+
+		static void snekit(){
+			Console.BackgroundColor = ConsoleColor.Red;
+			Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.WriteLine(@"
+				   _____               \      _______ _               ___                   
+				  (      , __     ___  |   , '   /    /        ___  .'   \    ___  , _ , _  
+				   `--.  |'  `. .'   ` |  /      |    |,---. .'   ` |        /   ` |' `|' `.
+				      |  |    | |----' |-<       |    |'   ` |----' |    _  |    | |   |   |
+				 \___.'  /    | `.___, /  \_     /    /    | `.___,  `.___| `.__/| /   '   /
+
+				");
+			Console.ForegroundColor = cForeground;
+			Console.BackgroundColor = cBackground;
 		}
 
 		static void dmsg(bool run)

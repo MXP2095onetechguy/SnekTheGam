@@ -1,0 +1,9 @@
+# Build system
+# right from https://cakebuild.net
+cake.bakery, cake.net
+
+
+# Packaging system
+# right from https://github.com/qmfrederik/dotnet-packaging
+
+dotnet-zip, dotnet-tarball, dotnet-deb, dotnet-rpm
