@@ -4,8 +4,9 @@ Yeah, snake but bad
 
 For production distribution get it at [itch.io](https://mxp-2095onetechguy.itch.io/snekthegam)
 
-For bleeding edge distribution, build from this git repository.
+For bleeding edge distribution, build from this git repository, take a look at the build guide.
 <hr>
+
 ## build guide
 
 <br>
