@@ -256,9 +256,13 @@ namespace SnekTheGam{
 			}
 
 
-#if (!CSHARP)
+#if (!CSHARP && !VC7)
 	#error CSHARP IS NOT DEFINED, IS THIS EVEN A CSHARP PROJECT?
 #endif
+
+			if(!Directory.Exists(HomeDir)){
+				Directory.CreateDirectory(HomeDir);
+			}
 
 			if(!File.Exists(JSONPath)){
 				Spinner.Start("there is no json file, let me make one at " + JSONPath, () => {
