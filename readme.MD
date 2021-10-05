@@ -2,7 +2,8 @@
 
 Yeah, snake but bad
 
-For distribution get it at [itch.io](https://mxp-2095onetechguy.itch.io/snekthegam)
+For production distribution get it at [itch.io](https://mxp-2095onetechguy.itch.io/snekthegam)
+For bleeding edge distribution, build from this git repository.
 <hr>
 build guide
 
