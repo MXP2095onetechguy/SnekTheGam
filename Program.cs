@@ -168,7 +168,7 @@ namespace SnekTheGam{
 		static string INIC = @"
 		[SnekTheGam.Conf]
 		; Millisecond based
-		Sleep=1000
+		Sleep=100
 		; should be true or false because of the method that is used for parsing
 		audioRun=true
 		";
