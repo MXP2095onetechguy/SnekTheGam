@@ -1,6 +1,8 @@
 # snek
 
 Yeah, snake but bad
+
+For distribution get it at [itch.io](https://mxp-2095onetechguy.itch.io/snekthegam)
 <hr>
 build guide
 

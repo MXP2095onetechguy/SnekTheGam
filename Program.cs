@@ -38,10 +38,12 @@ using System;
 using RNGGen;
 using Kurukuru;
 using System.IO;
+using IniParser;
 // using BinIOUtils;
 using Sharprompt;
 using System.Media;
 using MXPSQL.EDict;
+using IniParser.Model;
 using Newtonsoft.Json;
 using System.Threading;
 using System.Collections;
@@ -49,10 +51,9 @@ using System.Diagnostics;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using static System.AppDomain;
-using YamlDotNet.Serialization;
 using System.Collections.Generic;
+using IniParser.Model.Configuration;
 using System.Runtime.InteropServices;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace SnekTheGam{
 
@@ -108,7 +109,7 @@ namespace SnekTheGam{
 		static readonly string HomePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 		static readonly string HomeDir = Path.Combine(new String[] {HomePath, HomeDirName});
 		static readonly string JSONPath = Path.Combine(new String[] {HomeDir, "Storage.json"});
-		static readonly string YAMLPath = Path.Combine(new String[] {HomeDir, "Config.yaml"});
+		static readonly string ConfPath = Path.Combine(new String[] {HomeDir, "Config.ini"});
 
 		// eol
 		static string eol = System.Environment.NewLine;
@@ -161,6 +162,16 @@ namespace SnekTheGam{
 		  },
 		  'required': ['HighScore', 'LastSessionScore']
 		}");
+
+		// inifile
+		static FileIniDataParser iparser = new FileIniDataParser();
+		static string INIC = @"
+		[SnekTheGam.Conf]
+		; Millisecond based
+		Sleep=1000
+		; should be true or false because of the method that is used for parsing
+		audioRun=true
+		";
 
 		static int Main(string[] args){
 
@@ -229,18 +240,18 @@ namespace SnekTheGam{
 							}
 						}, Patterns.Line);
 					}
-					else if(arg == "---Debugger" || arg == "---Debian"){
-						/* while(true){
-							Console.Clear();
-							Console.WriteLine("Window Width: " + width);
-							Console.WriteLine("Window Height: " + height);
-						} */
-					}
 					else{
 						Console.WriteLine("That was close, let's imagine that this conversation didn't exist ");
 					}
 
 					return 0;
+				}
+				else if(arg == "---Debugger" || arg == "---Debian"){
+					/* while(true){
+						Console.Clear();
+						Console.WriteLine("Window Width: " + width);
+						Console.WriteLine("Window Height: " + height);
+					} */
 				}
 			}
 
@@ -257,6 +268,32 @@ namespace SnekTheGam{
 						JSONTemp.WriteTo(writer);
 					}
 				}, Patterns.Line);
+			}
+
+			if(!File.Exists(ConfPath)){
+				Spinner.Start("there is no configuration file, let me make one at " + ConfPath, () => {
+					using (StreamWriter swt = File.CreateText(ConfPath))
+					{
+						swt.Write(INIC);
+					}
+				}, Patterns.Line);
+			}
+
+			try{
+				Spinner.Start("Parsing Config at " + ConfPath, () => {
+					IniData data = iparser.ReadFile(ConfPath);
+					sleep = Int32.Parse(data["SnekTheGam.Conf"]["Sleep"]);
+					AudioRun = bool.Parse(data["SnekTheGam.Conf"]["audioRun"]);
+				});
+			}
+			catch(IOException ioe){
+				Prompt.Input<string>("This happened: " + ioe);
+			}
+			catch(System.FormatException fe){
+				Prompt.Input<string>("Is something wrong with your ini file because this happened: " + fe);
+			}
+			catch(Exception e){
+				Prompt.Input<string>(e.ToString());
 			}
 
 			// Console.SetCursorPosition(0, 0);
