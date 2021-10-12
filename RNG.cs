@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Diagnostics.CodeAnalysis;
 
@@ -12,7 +13,7 @@ namespace RNGGen
         public static int seedCount = 0;
 
         // randm generator engines
-        public static readonly ThreadLocal<Random> random_gen = new ThreadLocal<Random>(() => new Random(GenerateSeed()));  
+        public static ThreadLocal<Random> random_gen = new ThreadLocal<Random>(() => new Random(GenerateSeed()));  
         private static RNGCryptoServiceProvider crypt_random_gen = new RNGCryptoServiceProvider();
 
 
@@ -21,11 +22,16 @@ namespace RNGGen
             // note the usage of Interlocked, remember that in a shared context we can't just "seedCount++"
             int seedend = (int) ((DateTime.Now.Ticks << 4) + (Interlocked.Increment(ref seedCount)));
 
-            int middleseed = (int)DateTime.Now.Ticks + (int)DateTime.Now.Millisecond + (int)DateTime.Now.Day + (int)Environment.TickCount;
+            int middleseed = (int)DateTime.Now.Ticks + (int)DateTime.Now.Millisecond + (int)DateTime.Now.Day + (int)Environment.TickCount + seedCount;
 
-            int baseseed = Guid.NewGuid().GetHashCode() + new DateTime().Millisecond;
+            int middleseed2 = Environment.ProcessId + seedCount;
 
-            int readyseed = baseseed + middleseed + seedend;
+            int baseseed = Guid.NewGuid().GetHashCode() + new DateTime().Millisecond + seedCount;
+
+            string stringyseed = baseseed.ToString() + middleseed.ToString() + middleseed2.ToString() + seedend.ToString();
+
+            int readyseed = Convert.ToInt32(stringyseed) + seedCount + RandomIntFromCryptRNG(1, 10);
+
             return readyseed;
         }
 

@@ -43,6 +43,7 @@ using IniParser;
 using Sharprompt;
 using System.Media;
 using MXPSQL.EDict;
+using System.Net.Http;
 using IniParser.Model;
 using Newtonsoft.Json;
 using System.Threading;
@@ -172,6 +173,10 @@ namespace SnekTheGam{
 		; should be true or false because of the method that is used for parsing
 		audioRun=true
 		";
+
+
+		// client(maybe for future or maybe for jank)
+		static HttpClient HCL = new HttpClient();
 
 		static int Main(string[] args){
 
